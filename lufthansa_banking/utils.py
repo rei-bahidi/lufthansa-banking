@@ -1,4 +1,9 @@
 from transactions.models import Transaction
+import logging
+
+logging.basicConfig(filename='./example.log', encoding='utf-8', level=logging.DEBUG)
+
+logger = lambda name: logging.getLogger(name) 
 
 def convert_currency(amount: float, from_currency: str, to_currency: str) -> float:
     """
