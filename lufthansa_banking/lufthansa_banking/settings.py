@@ -40,7 +40,6 @@ INSTALLED_APPS = [
     'accounts',
     'transactions',
     'users',
-    'cards',
     'rest_framework',
 ]
 
