@@ -1,9 +1,9 @@
 from rest_framework import serializers
-from .models import BankAccount, Card
+from .models import Account, Card
 
-class BankAccountSerializer(serializers.ModelSerializer):
+class AccountSerializer(serializers.ModelSerializer):
     class Meta:
-        model = BankAccount
+        model = Account
         fields = ['account_id', 'iban', 'currency', 'balance', 'approved']
 
 class CardSerializer(serializers.ModelSerializer):

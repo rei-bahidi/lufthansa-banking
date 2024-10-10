@@ -1,11 +1,18 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
-
+from django.core.exceptions import ValidationError
 
 class CustomUser(AbstractUser):
     USER_TYPES = (('CUSTOMER', 'Customer'), ('BANKER', 'Banker'), ('ADMIN', 'Admin'),)
+    uuid = models.UUIDField(unique=True, blank=False, null=False)
+    email = models.EmailField(unique=True)
     user_type = models.CharField(max_length=200, default='CUSTOMER', blank=False, choices=USER_TYPES)
     is_active = models.BooleanField(default=True)
+    salary = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    username = None
+
+    USERNAME_FIELD = 'uuid'
+    REQUIRED_FIELDS = ['first_name', 'last_name']
 
     groups = models.ManyToManyField(
         Group,
@@ -18,3 +25,15 @@ class CustomUser(AbstractUser):
         related_name="customuser_permissions_set", 
         blank=True
     )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['first_name', 'last_name'], name='unique_name_combination')
+        ]
+
+    def save(self, *args, **kwargs):
+        # Check for an existing user with the same first and last name
+        if CustomUser.objects.filter(first_name=self.first_name, last_name=self.last_name).exists():
+            raise ValidationError("A user with this first and last name already exists.")
+        
+        super().save(*args, **kwargs)

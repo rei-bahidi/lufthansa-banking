@@ -1,118 +1,95 @@
-from django.shortcuts import redirect
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .serializers import CustomUserSerializer
 from .models import CustomUser
-from utils import logger
-from functools import wraps
-from django.http import HttpResponseForbidden
+from accounts.models import Account
+from utils import logger, banker_required
+from django.http import HttpResponseForbidden, Http404
 from django.utils.decorators import method_decorator
-from rest_framework import generics
-from django.shortcuts import get_object_or_404
+from accounts.serializers import AccountSerializer, CardSerializer
 
-
-def admin_required(view_func):
-    @wraps(view_func)
-    def wrapped_view(request, *args, **kwargs):
-        if request.user.is_authenticated and request.user.is_superuser:
-            return view_func(request, *args, **kwargs)
-        else:
-            return HttpResponseForbidden("You do not have access to this resource.")
-    return wrapped_view
-
-
-def banker_required(view_func):
-    @wraps(view_func)
-    def wrapped_view(request, *args, **kwargs):
-
-        if not request.user.is_authenticated:
-            return redirect('/api-auth/login')
-        
-        if not request.user.user_type == 'BANKER' and \
-           not request.user.is_superuser:
-            return HttpResponseForbidden("You do not have access to this resource.")
-        
-        return view_func(request, *args, **kwargs)
-    return wrapped_view
-
-class UserListView(generics.ListAPIView):
+class UserListView(APIView):
     @method_decorator(banker_required)
     def dispatch(self, *args, **kwargs):
         return super().dispatch(*args, **kwargs)
     
-    queryset = CustomUser.objects.all()
-    serializer_class = CustomUserSerializer
-   
-class UserView(APIView): 
+    def get(self, request, format=None):
+        # Bankers should only see customers, admins should see all
+        if request.user.is_superuser:
+            users = CustomUser.objects.all()  # Admin sees all users
+        else:
+            users = CustomUser.objects.filter(user_type='CUSTOMER')  # Banker sees only customers
+        
+        serializer = CustomUserSerializer(users, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, format=None):
+        # Only admins should be able to create users
+        if not request.user.is_superuser:
+            return HttpResponseForbidden("You do not have permission to create users.")
+        
+        try:
+            serializer = CustomUserSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=201)
+            return Response(serializer.errors, status=400)
+        except Exception as e:
+            logger('USERS').error(f"Error: {str(e)}")
+            return Response({"error": "Something went wrong"}, status=500)
+
+
+class UserView(APIView):
     @method_decorator(banker_required)
     def dispatch(self, *args, **kwargs):
         return super().dispatch(*args, **kwargs)
-
-    def get_queryset(self):
-        users = CustomUser.objects.filter(is_active=True)
-        return users
 
     def get_object(self, user_id):
-        user = get_object_or_404(CustomUser, id=user_id)
-        return user
-    
-    def get(self, request, user_id):
-        try:            
-            user = self.get_object(user_id)
-            if user:
-                serializer = CustomUserSerializer(user)  # Serialize data
-                return Response(serializer.data)
-            return Response({"error": "User not found"}, status=404)
-        except Exception as e:
-            logger('USERS').error(f"Error: {str(e)}")
-            return Response({"error": "Something went wrong"}, status=500)
-        
-    def post(self, request):
         try:
-            serializer = CustomUserSerializer(data=request.data)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=201)
-            return Response(serializer.errors, status=400)
-        except Exception as e:
-            logger('USERS').error(f"Error: {str(e)}")
-            return Response({"error": "Something went wrong"}, status=500)
-        
-class BankerListView(generics.ListAPIView):
-    @method_decorator(admin_required)
-    def dispatch(self, *args, **kwargs):
-        return super().dispatch(*args, **kwargs)
-    
-    queryset = CustomUser.objects.filter(user_type='BANKER')
-    serializer_class = CustomUserSerializer
+            return CustomUser.objects.get(pk=user_id)
+        except CustomUser.DoesNotExist:
+            raise Http404
 
-class BankerView(APIView):
-    @method_decorator(admin_required)
-    def dispatch(self, *args, **kwargs):
-        return super().dispatch(*args, **kwargs)
-    
-    def get_queryset(self, user_id=None):
-        if user_id:
-            return CustomUser.objects.filter(id=user_id)
-        
-    def get(self, request, user_id=None):
+    def get(self, request, user_id, format=None):
         try:
-            queryset = self.get_queryset(user_id)  # Pass the user_id parameter
-            if queryset:
-                serializer = CustomUserSerializer(queryset, many=True)  # Serialize data
-                return Response(serializer.data)
-            return Response({"error": "User not found"}, status=404)
+            user = self.get_object(user_id)
+
+            # Bankers can only interact with customer data
+            if request.user.user_type == 'BANKER' and user.user_type != 'CUSTOMER':
+                return HttpResponseForbidden("Bankers can only access customer data.")
+            
+            serializer = CustomUserSerializer(user)  # Serialize data
+            return Response(serializer.data)
         except Exception as e:
             logger('USERS').error(f"Error: {str(e)}")
             return Response({"error": "Something went wrong"}, status=500)
-        
-    def post(self, request, user_id=None):
+
+    def put(self, request, user_id, format=None):
+        user = self.get_object(user_id)
+
+        if request.user.user_type == 'BANKER' and user.user_type != 'CUSTOMER':
+            return HttpResponseForbidden("Bankers can only edit customer data.")
+
         try:
-            serializer = CustomUserSerializer(data=request.data)
+            serializer = CustomUserSerializer(user, data=request.data)
             if serializer.is_valid():
                 serializer.save()
-                return Response(serializer.data, status=201)
+                return Response(serializer.data)
             return Response(serializer.errors, status=400)
         except Exception as e:
             logger('USERS').error(f"Error: {str(e)}")
             return Response({"error": "Something went wrong"}, status=500)
+        
+    def delete(self, request, user_id, format=None):        
+        user = self.get_object(user_id)
+        if request.user.user_type == 'BANKER' and user.user_type != 'CUSTOMER':
+            return HttpResponseForbidden("Bankers can only delete customer data.")
+
+        try:
+            user.delete()
+            return Response(status=204)
+        except Exception as e:
+            logger('USERS').error(f"Error: {str(e)}")
+            return Response({"error": "Something went wrong"}, status=500)
+        
+

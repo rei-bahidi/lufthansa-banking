@@ -11,6 +11,7 @@ class Transaction(models.Model):
     currency = models.ForeignKey('accounts.Currencies', max_length=10, null=True, on_delete=models.SET_NULL)
     currency_code = models.CharField(max_length=10, default='EUR')
 
+
     def save(self, *args, **kwargs):
         if self.account:
             self.account_reference = self.account.iban

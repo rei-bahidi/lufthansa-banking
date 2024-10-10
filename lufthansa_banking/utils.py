@@ -1,4 +1,7 @@
 import logging
+from functools import wraps
+from django.http import HttpResponseForbidden
+
 
 logging.basicConfig(filename='./example.log', encoding='utf-8', level=logging.DEBUG)
 
@@ -30,6 +33,43 @@ def get_exchange_rate(from_currency: str, to_currency: str) -> float:
 
     return currency_rates.get(from_currency, {}).get(to_currency)
     
-    
+def admin_required(view_func):
+    @wraps(view_func)
+    def wrapped_view(request, *args, **kwargs):
+        if request.user.is_authenticated and request.user.is_superuser:
+            return view_func(request, *args, **kwargs)
+        else:
+            return HttpResponseForbidden("You do not have access to this resource.")
+    return wrapped_view
 
-    
+
+def banker_required(view_func):
+    @wraps(view_func)
+    def wrapped_view(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return HttpResponseForbidden("You do not have access to this resource.")
+        
+        if request.user.user_type == 'CUSTOMER':
+            return HttpResponseForbidden("You do not have access to this resource.")
+
+        if request.user.user_type == 'BANKER' or request.user.is_superuser:
+            return view_func(request, *args, **kwargs)
+        
+        return HttpResponseForbidden("You do not have access to this resource.")
+    return wrapped_view
+
+def customer_required(view_func):
+    @wraps(view_func)
+    def wrapped_view(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return HttpResponseForbidden("You do not have access to this resource.")
+        
+        if request.user.user_type == 'BANKER':
+            return HttpResponseForbidden("You do not have access to this resource.")
+
+        if request.user.user_type == 'CUSTOMER' or request.user.is_superuser:
+            return view_func(request, *args, **kwargs)
+        
+        return HttpResponseForbidden("You do not have access to this resource.")
+    return wrapped_view
+

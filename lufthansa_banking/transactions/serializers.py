@@ -10,10 +10,9 @@ class TransactionSerializer(serializers.ModelSerializer):
 class DebitTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = DebitTransaction
-        fields = ['transaction_id', 'bank_account', 'amount', 'currency', 'transaction_type', 'related_account_iban']
-
+        fields = TransactionSerializer.Meta.fields
 
 class CreditTransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = CreditTransaction
-        fields = ['transaction_id', 'bank_account', 'amount', 'currency', 'transaction_type', 'related_account_iban']
+        fields = TransactionSerializer.Meta.fields

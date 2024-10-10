@@ -2,8 +2,6 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from utils import convert_currency
 
-
-
 class Currencies(models.Model):
     currency_name = models.CharField(max_length=10, unique=True, default='Euro')
     currency_code = models.CharField(primary_key=True, unique=True, max_length=10, default='EUR')
@@ -44,12 +42,26 @@ class Currencies(models.Model):
         super().save(*args, **kwargs)
 
 class Account(models.Model):
-    
+    STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    )
+
     balance = models.DecimalField(max_digits=10, decimal_places=2)
     creation_date = models.DateTimeField(auto_now_add=True)
     currency = models.ForeignKey('accounts.Currencies', on_delete=models.SET_DEFAULT, default='EUR')
     user = models.ForeignKey('users.CustomUser', on_delete=models.CASCADE)
-    status = models.BooleanField(default=False)
+    status = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=False)
+
+    def approve(self):
+        self.status = 'approved'
+        self.save()
+
+    def reject(self):
+        self.status = 'rejected'
+        self.save()
 
     def save(self, *args, **kwargs):
         if not self.currency.is_active:
