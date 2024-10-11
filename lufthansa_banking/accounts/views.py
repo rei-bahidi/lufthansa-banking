@@ -41,8 +41,6 @@ class AccountView(APIView):
     
     def get(self, request, user_id):
         try:
-            if not request.user.is_authenticated:
-                return Response({"error": "You do not have access to this resource"}, status=403)
             
             if request.user.user_type == 'CUSTOMER' and request.user.id != user_id:
                 return Response({"error": "You do not have access to this resource"}, status=403)
@@ -56,8 +54,7 @@ class AccountView(APIView):
 
     def put(self, request, user_id):
         try:
-            if not request.user.is_authenticated:
-                return Response({"error": "You do not have access to this resource"}, status=403)
+            
             
             if request.user.user_type == 'CUSTOMER':
                 return Response({"error": "You do not have access to this resource"}, status=403)
@@ -74,8 +71,6 @@ class AccountView(APIView):
 
     def delete(self, request, user_id):
         try:
-            if not request.user.is_authenticated:
-                return Response({"error": "You do not have access to this resource"}, status=403)
             
             if request.user.user_type == 'CUSTOMER':
                 return Response({"error": "You do not have access to this resource"}, status=403)
@@ -91,7 +86,7 @@ class ApproveAccountRequestView(APIView):
     def post(self, request, pk, *args, **kwargs):
         try:
             account_request = Account.objects.get(pk=pk, status='pending')
-            account_request.approve()  # Call the approve method to change the status
+            account_request.approve() 
             return Response({"message": "Account request approved."}, status=200)
         except Account.DoesNotExist:
             return Response({"error": "Account request not found or already processed."}, status=404)
@@ -100,17 +95,33 @@ class RejectAccountRequestView(APIView):
     def post(self, request, pk, *args, **kwargs):
         try:
             account_request = Account.objects.get(pk=pk, status='pending')
-            account_request.reject()  # Call the reject method to change the status
+            account_request.reject()
             return Response({"message": "Account request rejected."}, status=200)
         except Account.DoesNotExist:
             return Response({"error": "Account request not found or already processed."}, status=404)
 
+class ApproveCardRequestView(APIView):
+    def post(self, request, pk, *args, **kwargs):
+        try:
+            card_request = Card.objects.get(pk=pk, status='pending')
+            card_request.approve() 
+            return Response({"message": "Card request approved."}, status=200)
+        except Card.DoesNotExist:
+            return Response({"error": "Card request not found or already processed."}, status=404)
+
+class RejectCardRequestView(APIView):
+    def post(self, request, pk, *args, **kwargs):
+        try:
+            card_request = Card.objects.get(pk=pk, status='pending')
+            card_request.reject()
+            return Response({"message": "Card request rejected."}, status=200)
+        except Card.DoesNotExist:
+            return Response({"error": "Card request not found or already processed."}, status=404)
+
 class CardListView(APIView):
     def get(self, request, user_id):
         try:
-            if not request.user.is_authenticated:
-                return Response({"error": "You do not have access to this resource"}, status=403)
-            
+           
             if request.user.user_type == 'CUSTOMER' and request.user.id != user_id:
                 return Response({"error": "You do not have access to this resource"}, status=403)
             
@@ -123,9 +134,6 @@ class CardListView(APIView):
 
     def post(self, request, user_id):
         try:
-            if not request.user.is_authenticated:
-                return Response({"error": "You do not have access to this resource"}, status=403)
-            
             if request.user.user_type == 'CUSTOMER' and request.user.id != user_id:
                 return Response({"error": "You do not have access to this resource"}, status=403)
             
@@ -142,8 +150,7 @@ class CardListView(APIView):
 class CardView(APIView):
     def get(self, request, user_id, card_id):
         try:
-            if not request.user.is_authenticated:
-                return Response({"error": "You do not have access to this resource"}, status=403)
+            
             
             if request.user.user_type == 'CUSTOMER' and request.user.id != user_id:
                 return Response({"error": "You do not have access to this resource"}, status=403)
@@ -158,8 +165,6 @@ class CardView(APIView):
 
     def put(self, request, card_id):
         try:
-            if not request.user.is_authenticated:
-                return Response({"error": "You do not have access to this resource"}, status=403)
             
             if request.user.user_type == 'CUSTOMER':
                 return Response({"error": "You do not have access to this resource"}, status=403)
@@ -177,8 +182,6 @@ class CardView(APIView):
 
     def delete(self, request, card_id):
         try:
-            if not request.user.is_authenticated:
-                return Response({"error": "You do not have access to this resource"}, status=403)
             
             if request.user.user_type == 'CUSTOMER':
                 return Response({"error": "You do not have access to this resource"}, status=403)

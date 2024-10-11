@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
-
+from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'transactions',
     'users',
     'rest_framework',
+    'rest_framework_simplejwt',
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True
@@ -49,21 +50,21 @@ CORS_ALLOW_ALL_ORIGINS = True
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
 ]
 
 CSRF_TRUSTED_ORIGINS = ['http://localhost:8000']
 
 ROOT_URLCONF = 'lufthansa_banking.urls'
 
-AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
-]
+# AUTHENTICATION_BACKENDS = [
+#     'django.contrib.auth.backends.ModelBackend',
+# ]
 
 TEMPLATES = [
     {
@@ -144,7 +145,9 @@ REST_FRAMEWORK = {
     # Use Django's standard `django.contrib.auth` permissions,
     # or allow read-only access for unauthenticated users.
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.BasicAuthentication',     # For basic HTTP auth (useful for testing)
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        # 'rest_framework.authentication.BasicAuthentication',
+        # 'rest_framework.authentication.SessionAuthentication',    
     ],
     
     'DEFAULT_PERMISSION_CLASSES': [
@@ -153,5 +156,14 @@ REST_FRAMEWORK = {
     ]
 }
 
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),   # Short-lived access tokens
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),     # Long-lived refresh tokens
+    'ROTATE_REFRESH_TOKENS': False,                  # If True, every refresh will return new access and refresh tokens
+    'BLACKLIST_AFTER_ROTATION': True,                # Blacklist old refresh tokens after rotation (if enabled)
+    'AUTH_HEADER_TYPES': ('Bearer',),                # Token will be passed in Authorization header as Bearer token
+}
+
 LOGIN_REDIRECT_URL = '/users/customers/list'
+LOGOUT_REDIRECT_URL = '/users/login'
 AUTH_USER_MODEL = 'users.CustomUser'
