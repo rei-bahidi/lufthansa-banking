@@ -16,7 +16,7 @@ class UserViewSet(ModelViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
     # Set permission classes
-    permission_classes = [IsAuthenticated ]
+    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
         """User POST method"""
@@ -33,6 +33,8 @@ class UserViewSet(ModelViewSet):
         try:
             if self.request.user.type == 'ADMIN':
                 custom_user = CustomUser.objects.all()
+            elif self.request.user.type == 'BANKER':
+                custom_user = CustomUser.objects.filter(type='CUSTOMER')
             else:
                 user = self.request.user
                 custom_user = CustomUser.objects.filter(id=user.id)

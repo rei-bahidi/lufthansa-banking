@@ -26,6 +26,9 @@ class TransactionViewSet(ModelViewSet):
     def get_queryset(self):
         """GET, PUT, DELETE methods for Transaction"""
         try:
+            if self.request.user.type == 'ADMIN' or self.request.user.type == 'BANKER':
+                return Transaction.objects.all()
+            
             user = self.request.user
             debit_transactions = Transaction.objects.filter(from_account__user=user)
             if not debit_transactions.exists():
