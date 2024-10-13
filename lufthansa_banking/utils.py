@@ -2,9 +2,15 @@ import logging
 from functools import wraps
 from django.http import HttpResponseForbidden
 
+# Utils file where general concepts used thoruguout the project are defined
 
+
+# Set the logger configs such as the logger location and name, 
+# the provisory location is the root of the project but normally it should be in a log folder,
+# in the root of the system
 logging.basicConfig(filename='./example.log', encoding='utf-8', level=logging.DEBUG)
 
+# Create a factory function to create loggers
 logger = lambda name: logging.getLogger(name) 
 
 def convert_currency(amount: float, from_currency: str, to_currency: str) -> float:
@@ -22,6 +28,12 @@ def convert_currency(amount: float, from_currency: str, to_currency: str) -> flo
 
 
 def get_exchange_rate(from_currency: str, to_currency: str) -> float:
+    """
+    Get the exchange rate between two currencies
+    :param from_currency: the currency to convert from
+    :param to_currency: the currency to convert to
+    :return: the exchange rate
+    """
     if from_currency == to_currency:
         return
     
@@ -32,44 +44,3 @@ def get_exchange_rate(from_currency: str, to_currency: str) -> float:
     }
 
     return currency_rates.get(from_currency, {}).get(to_currency)
-    
-def admin_required(view_func):
-    @wraps(view_func)
-    def wrapped_view(request, *args, **kwargs):
-        if request.user.is_authenticated and request.user.is_superuser:
-            return view_func(request, *args, **kwargs)
-        else:
-            return HttpResponseForbidden("You do not have access to this resource.")
-    return wrapped_view
-
-
-def banker_required(view_func):
-    @wraps(view_func)
-    def wrapped_view(request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return HttpResponseForbidden("You do not have access to this resource.")
-        
-        if request.user.user_type == 'CUSTOMER':
-            return HttpResponseForbidden("You do not have access to this resource.")
-
-        if request.user.user_type == 'BANKER' or request.user.is_superuser:
-            return view_func(request, *args, **kwargs)
-        
-        return HttpResponseForbidden("You do not have access to this resource.")
-    return wrapped_view
-
-def customer_required(view_func):
-    @wraps(view_func)
-    def wrapped_view(request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return HttpResponseForbidden("You do not have access to this resource.")
-        
-        if request.user.user_type == 'BANKER':
-            return HttpResponseForbidden("You do not have access to this resource.")
-
-        if request.user.user_type == 'CUSTOMER' or request.user.is_superuser:
-            return view_func(request, *args, **kwargs)
-        
-        return HttpResponseForbidden("You do not have access to this resource.")
-    return wrapped_view
-

@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+import sys
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -99,6 +100,7 @@ DATABASES = {
     }
 }
 
+ATOMIC_REQUESTS = True
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -139,7 +141,7 @@ STATIC_URL = 'static/'
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
     # Use Django's standard `django.contrib.auth` permissions,
@@ -157,13 +159,21 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),   # Short-lived access tokens
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),   # Short-lived access tokens
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),     # Long-lived refresh tokens
     'ROTATE_REFRESH_TOKENS': False,                  # If True, every refresh will return new access and refresh tokens
     'BLACKLIST_AFTER_ROTATION': True,                # Blacklist old refresh tokens after rotation (if enabled)
     'AUTH_HEADER_TYPES': ('Bearer',),                # Token will be passed in Authorization header as Bearer token
 }
 
-LOGIN_REDIRECT_URL = '/users/customers/list'
-LOGOUT_REDIRECT_URL = '/users/login'
+if 'pytest' in sys.modules:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': ':memory:',
+        }
+    }
+
+# LOGIN_REDIRECT_URL = '/users/customers/list'
+# LOGOUT_REDIRECT_URL = '/users/login'
 AUTH_USER_MODEL = 'users.CustomUser'

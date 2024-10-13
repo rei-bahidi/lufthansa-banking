@@ -1,18 +1,18 @@
-from .models import Transaction, DebitTransaction, CreditTransaction
+from .models import Transaction
 from rest_framework import serializers
 
 
 class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
-        fields = ['transaction_id', 'bank_account', 'amount', 'currency', 'transaction_type', 'related_account_iban']
+        fields = ['from_account', 'amount', 'currency', 'transaction_type', 'to_account']
 
-class DebitTransactionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = DebitTransaction
-        fields = TransactionSerializer.Meta.fields
+    def validate(self, data):
 
-class CreditTransactionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CreditTransaction
-        fields = TransactionSerializer.Meta.fields
+        if data['transaction_type'] == 'CREDT' and not data['to_account']:
+            raise serializers.ValidationError({"to_account": "Cannot CREDIT without a 'to_account'."})
+        
+        if data['transaction_type'] == 'DEBIT' and not data['from_account']:
+            raise serializers.ValidationError({"from_account": "Cannot DEBIT without a 'from_account'."})
+        
+        return data
