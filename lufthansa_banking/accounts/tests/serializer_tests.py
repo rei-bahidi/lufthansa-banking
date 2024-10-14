@@ -1,15 +1,20 @@
 import pytest
 from rest_framework.exceptions import ValidationError
-from accounts.models import Account, Card, CardRequest, AccountRequest
+from accounts.models import Account, Card, CardRequest, AccountRequest, Currencies
 from accounts.serializers import AccountSerializer, CardSerializer, CardRequestSerializer, AccountRequestSerializer
-from django.contrib.auth import get_user_model
-
-User = get_user_model()
+from users.models import CustomUser 
+from rest_framework.request import Request
 
 @pytest.fixture
-def user(db):
+def active_currency():
+    """Fixture for creating an active currency."""
+    return Currencies.objects.create(currency_name='Euro', currency_code='EUR', is_active=True)
+    
+
+@pytest.fixture
+def user():
     """Create a test user."""
-    return User.objects.create_user(
+    return CustomUser.objects.create_user(
         username='testuser',
         email='testuser@example.com',
         password='testpassword',
@@ -18,17 +23,17 @@ def user(db):
     )
 
 @pytest.fixture
-def account(db, user):
+def account(user, active_currency):
     """Create a test account."""
     return Account.objects.create(
         user=user,
         balance=1000.00,
-        currency='EUR',  # Assuming currency is a string, adjust if it's a foreign key
+        currency=active_currency,  # Assuming currency is a string, adjust if it's a foreign key
         is_active=True
     )
 
 @pytest.fixture
-def card(db, account):
+def card(account):
     """Create a test card."""
     return Card.objects.create(
         card_number='1234567812345678',
@@ -42,8 +47,8 @@ def test_account_serializer(account):
     """Test that the AccountSerializer works correctly."""
     serializer = AccountSerializer(account)
     assert serializer.data['id'] == str(account.id)
-    assert serializer.data['balance'] == account.balance
-    assert serializer.data['currency'] == account.currency
+    assert serializer.data['balance'] == format(account.balance, '.2f')
+    assert serializer.data['currency'] == account.currency.currency_code
     assert serializer.data['is_active'] == account.is_active
 
 @pytest.mark.django_db
@@ -56,20 +61,24 @@ def test_card_serializer(card):
 @pytest.mark.django_db
 def test_card_request_serializer_valid(account, user):
     """Test that the CardRequestSerializer validates correctly."""
+    temp_user = user
     request_data = {
         'card_type': 'DEBIT',
-        'account': account,
+        'account': account.id,
         'user_salary': 600.00,
-        'salary_currency': 'EUR'  # Assuming currency is a string
+        'salary_currency': 'EUR'
     }
 
-    serializer = CardRequestSerializer(data=request_data, context={'request': user})
+    class MockRequest:
+        user = temp_user
+
+    serializer = CardRequestSerializer(data=request_data, context={'request': MockRequest()})
     assert serializer.is_valid()
 
 @pytest.mark.django_db
 def test_card_request_serializer_invalid_user(account, user):
     """Test that the CardRequestSerializer raises a validation error for incorrect account ownership."""
-    other_user = User.objects.create_user(
+    other_user = CustomUser.objects.create_user(
         username='otheruser',
         email='otheruser@example.com',
         password='otherpassword'
@@ -77,29 +86,37 @@ def test_card_request_serializer_invalid_user(account, user):
 
     request_data = {
         'card_type': 'DEBIT',
-        'account': account,
+        'account': account.id,
         'user_salary': 600.00,
         'salary_currency': 'EUR'  # Assuming currency is a string
     }
 
-    serializer = CardRequestSerializer(data=request_data, context={'request': other_user})
+    class MockRequest:
+        user = other_user
+
+    serializer = CardRequestSerializer(data=request_data, context={'request': MockRequest()})
 
     with pytest.raises(ValidationError) as excinfo:
         serializer.is_valid(raise_exception=True)
 
-    assert str(excinfo.value) == "You can only request a card for your own account."
+    assert str(excinfo.value) == "{'non_field_errors': [ErrorDetail(string='You can only request a card for your own account.', code='invalid')]}"
 
 @pytest.mark.django_db
-def test_account_request_serializer_create(user):
+def test_account_request_serializer_create(user, active_currency):
     """Test that the AccountRequestSerializer creates an account request correctly."""
+
+    temp_user = user
     request_data = {
         'account_type': 'Standard Account',
         'initial_deposit': 500.00,
-        'currency': 'EUR',
+        'currency': active_currency.currency_code,
         'description': 'Need a new account'
     }
 
-    serializer = AccountRequestSerializer(data=request_data, context={'request': user})
+    class MockRequest:
+        user = temp_user
+
+    serializer = AccountRequestSerializer(data=request_data, context={'request': MockRequest()})
     assert serializer.is_valid()
 
     account_request = serializer.save()
