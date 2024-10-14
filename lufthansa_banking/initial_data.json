@@ -1,0 +1,26 @@
+[
+    {
+        "model": "accounts.Currencies",
+        "pk": "EUR",
+        "fields": {
+            "currency_name": "Euro",
+            "is_active": "True"
+        }
+    },
+    {
+        "model": "users.User",
+        "pk": 1,
+        "fields": {
+            "password": "pbkdf2_sha256$870000$y7evOap3pNrzKc2AkZRJF5$8xLvQX5XaDNSd2ieTCOaPGjVEPUT2Wz5ZXEeLRH1Tec=",
+            "is_active": true,
+            "email": "admin@google.com",
+            "username": "admin",
+            "first_name": "Admin",
+            "last_name": "Admin",
+            "is_staff": true,
+            "is_superuser": true,
+            "type": "ADMIN",
+        }     
+    }
+
+]

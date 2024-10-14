@@ -6,7 +6,6 @@ from utils import logger
 from django.db import transaction
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
-from .permissions import IsTransactionOwner
 from rest_framework.exceptions import ValidationError
 
 class TransactionViewSet(ModelViewSet):
