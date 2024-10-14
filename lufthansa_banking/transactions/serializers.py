@@ -9,7 +9,7 @@ class TransactionSerializer(ModelSerializer):
 
     def validate(self, data):
 
-        if data['transaction_type'] == 'CREDT' and not data['to_account']:
+        if data['transaction_type'] == 'CREDIT' and not data['to_account']:
             raise ValidationError({"to_account": "Cannot CREDIT without a 'to_account'."})
         
         if data['transaction_type'] == 'DEBIT' and not data['from_account']:

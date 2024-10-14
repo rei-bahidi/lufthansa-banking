@@ -28,7 +28,7 @@ def account(user, active_currency):
     return Account.objects.create(
         user=user,
         balance=1000.00,
-        currency=active_currency,  # Assuming currency is a string, adjust if it's a foreign key
+        currency=active_currency,  
         is_active=True
     )
 
@@ -88,7 +88,7 @@ def test_card_request_serializer_invalid_user(account, user):
         'card_type': 'DEBIT',
         'account': account.id,
         'user_salary': 600.00,
-        'salary_currency': 'EUR'  # Assuming currency is a string
+        'salary_currency': 'EUR' 
     }
 
     class MockRequest:

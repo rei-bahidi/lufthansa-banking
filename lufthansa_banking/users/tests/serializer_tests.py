@@ -24,16 +24,16 @@ def test_valid_user_serializer(user_data):
     user = serializer.save()
     assert user.username == 'testuser'
     assert user.email == 'testuser@example.com'
-    assert user.check_password('testpassword')  # Check if password is hashed
+    assert user.check_password('testpassword')  
     assert user.type == 'CUSTOMER'
 
 
 @pytest.mark.django_db
 def test_user_serializer_duplicate_email(user_data):
     """Test that creating a user with a duplicate email raises a ValidationError."""
-    CustomUser.objects.create(**user_data)  # Create the first user
+    CustomUser.objects.create(**user_data)  
     user_data["username"] = "testerrr"
-    serializer = CustomUserSerializer()  # Try to create a second user with the same email
+    serializer = CustomUserSerializer() 
 
     with pytest.raises(ValidationError) as excinfo:
         serializer.validate(user_data)
@@ -64,8 +64,6 @@ def test_token_obtain_pair_serializer(user_data):
     user = CustomUser.objects.create_user(**user_data)  # Create a user to authenticate
 
     serializer = CustomTokenObtainPairSerializer.get_token(user)
-    
-    # Ensure that the token contains the correct user type
     assert serializer['type'] == user.type
-    assert 'exp' in serializer  # Check if expiration time is in the token
+    assert 'exp' in serializer  
     assert 'jti' in serializer  
