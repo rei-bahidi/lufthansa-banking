@@ -10,13 +10,5 @@ class CustomUser(AbstractUser):
         ADMIN = 'ADMIN'
     
     email = models.EmailField(unique=True)
-    type = models.CharField(max_length=20, default='CUSTOMER')
+    type = models.CharField(max_length=20, choices=UserTypes, default='CUSTOMER')
 
-
-    REQUIRED_FIELDS = ['first_name', 'last_name']
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['first_name', 'last_name'], name='unique_name_combination')
-        ]
-    

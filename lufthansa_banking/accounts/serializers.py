@@ -14,9 +14,24 @@ class CardSerializer(serializers.ModelSerializer):
 class CardRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = CardRequest
-        fields = ['card_type', 'account', 'user_salary', 'salary_currency', 'status']
+        fields = ['id', 'card_type', 'account', 'user_salary', 'salary_currency']
+
+    def validate(self, attrs):
+        if Account.objects.get(id=attrs['account'].id).user != self.context['request'].user:
+            raise serializers.ValidationError("You can only request a card for your own account.")
+        return attrs
 
 class AccountRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = AccountRequest
-        fields = ['account_type', 'initial_deposit', 'currency', 'user', 'description', 'status']
+        fields = ['id', 'account_type', 'initial_deposit', 'currency', 'description']
+        extra_kwargs= {
+            'user': {'read_only': True},
+            'id': {'read_only': True},
+        }
+
+    def create(self, validated_data):
+        validated_data["user"] = self.context['request'].user
+        request = AccountRequest.objects.create(**validated_data)
+        request.save()
+        return request

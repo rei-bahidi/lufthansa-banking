@@ -65,7 +65,7 @@ class Account(models.Model):
     creation_date = models.DateTimeField(auto_now_add=True)
     currency = models.ForeignKey('accounts.Currencies', on_delete=models.SET_DEFAULT, default='EUR')
     user = models.ForeignKey('users.CustomUser', on_delete=models.CASCADE)
-    is_active = models.BooleanField()
+    is_active = models.BooleanField(default=True)
 
     def save(self, *args, **kwargs):
         """Save account instance with validations"""

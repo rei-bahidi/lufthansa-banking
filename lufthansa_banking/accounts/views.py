@@ -3,8 +3,6 @@ from rest_framework.response import Response
 from utils import logger
 from .models import Account, AccountRequest, Card, CardRequest
 from .serializers import AccountSerializer, AccountRequestSerializer, CardSerializer, CardRequestSerializer
-from .permissions import IsAccountOwner, IsCardOwner, IsBankerOrAdmin
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.exceptions import ValidationError
 
@@ -12,11 +10,14 @@ class AccountViewSet(ModelViewSet):
     """Viewset for Account model"""
     queryset = Account.objects.all()
     serializer_class = AccountSerializer
-    permission_classes = [IsAuthenticated, IsAccountOwner]
 
-    def perform_create(self, serializer):
+    def create(self, request):
         """Account POST method"""
+        serializer = AccountSerializer(data=request.data)
         try:
+            serializer.is_valid(raise_exception=True)
+            if request.user.type == 'CUSTOMER':
+                return Response({"error": "Customer can't create accounts"}, 403)
             serializer.save()
             return Response(serializer.data, status=201)
         except ValidationError as e:
@@ -28,8 +29,13 @@ class AccountViewSet(ModelViewSet):
     def get_queryset(self):
         """GET, PUT, DELETE methods for Account"""
         try:
-            user = self.request.user
-            accounts = Account.objects.filter(user=user)
+            if self.request.user.type == 'CUSTOMER' and self.request.method == "DELETE":
+                return Response({"error": "Customer can't delete accounts"}, 201)
+            if self.request.user.type == 'CUSTOMER':
+                user = self.request.user
+                accounts = Account.objects.filter(user=user)
+            else:
+                accounts = Account.objects.all()
             if accounts.exists():
                 return accounts
             raise Account.DoesNotExist
@@ -41,10 +47,12 @@ class CardViewSet(ModelViewSet):
     """Viewset for Card model"""
     queryset = Card.objects.all()
     serializer_class = CardSerializer
-    permission_classes = [IsAuthenticated, IsCardOwner]
 
     def perform_create(self, serializer):
         """Card POST method"""
+        if self.request.user.type == 'CUSTOMER':
+            return Response({"error": "Customer can't create cards"}, 403)
+
         try:
             serializer.save()
             return Response(serializer.data, status=201)
@@ -55,23 +63,27 @@ class CardViewSet(ModelViewSet):
             return Response({"error": "Something went wrong"}, status=500)
             
     def get_queryset(self):
-        """GET, PUT, DELETE methods for Card"""
+        """GET, DELETE methods for Card"""
         try:
-            user = self.request.user
-            cards = Card.objects.filter(user=user)
-            if cards.exists():
-                return cards
-            raise Card.DoesNotExist
+            if self.request.user.type == 'CUSTOMER' and self.request.method == "DELETE":
+                return Response({"error": "Customer can't delete cards"}, 403)
+
+            if self.request.user.type == 'CUSTOMER':
+                user = self.request.user
+                accounts = Account.objects.filter(user=user)  
+                cards = Card.objects.filter(account__in=accounts)  
+            else:
+                cards = Card.objects.all()
+
+            return cards if cards.exists() else Card.DoesNotExist
         except Exception as e:
             logger('ACCOUNTS').error(f"Error: {str(e)}")
             return Card.objects.none()
-        
 
 class AccountRequestViewSet(ModelViewSet):
     """Viewset for AccountRequest model"""
     queryset = AccountRequest.objects.all()
     serializer_class = AccountRequestSerializer
-    permission_classes = [IsAuthenticated, IsAccountOwner]
 
     def perform_create(self, serializer):
         """AccountRequest POST method"""
@@ -85,8 +97,13 @@ class AccountRequestViewSet(ModelViewSet):
             return Response({"error": "Something went wrong"}, status=500)
             
     def get_queryset(self):
-        """GET, PUT, DELETE methods for AccountRequest"""
+        """GET, DELETE methods for AccountRequest"""
         try:
+            if self.request.user.type == 'CUSTOMER' and self.request.method == "DELETE":
+                return Response({"error": "Customer can't delete account requests"}, 201)
+
+            if self.request.user.type == 'CUSTOMER':
+                account_request = AccountRequest.objects.filter(user=self.request.user)
             account_request = AccountRequest.objects.all()
             if account_request.exists():
                 return account_request
@@ -101,10 +118,10 @@ class CardRequestViewSet(ModelViewSet):
     """Viewset for CardRequest model"""
     queryset = CardRequest.objects.all()
     serializer_class = CardRequestSerializer
-    permission_classes = [IsAuthenticated, IsCardOwner]
 
     def perform_create(self, serializer):
         """CardRequest POST method"""
+
         try:
             serializer.save()
             return Response(serializer.data, status=201)
@@ -115,8 +132,19 @@ class CardRequestViewSet(ModelViewSet):
             return Response({"error": "Something went wrong"}, status=500)
             
     def get_queryset(self):
-        """GET, PUT, DELETE methods for CardRequest"""
+        """GET, DELETE methods for CardRequest"""
+
         try:
+            if self.request.user.type == 'CUSTOMER' and self.request.method == "DELETE":
+                return Response({"error": "Customer can't delete card requests"}, 201)
+
+            if self.request.user.type == 'CUSTOMER' and self.request.method == "DELETE":
+                return Response({"error": "Customer can't delete card requests"}, 201)
+
+            if self.request.user.type == 'CUSTOMER':
+                user = self.request.user
+                accounts = Account.objects.filter(user=user)  
+                cards = Card.objects.filter(account__in=accounts)  
             card_request = CardRequest.objects.all()
             if card_request.exists():
                 return card_request
@@ -128,10 +156,11 @@ class CardRequestViewSet(ModelViewSet):
 
 class ApproveAccountRequestView(APIView):
     """Approve account request"""
-    permission_classes = [IsAuthenticated]
-
     def post(self, request, id):
         """POST method for approving account request"""
+
+        if request.user.type == 'CUSTOMER':
+            return Response({"error": "Customer can't approve account"}, 403)
         try:
             account_request = AccountRequest.objects.get(pk=id, status='PENDING')
             account_request.approve() 
@@ -146,10 +175,11 @@ class ApproveAccountRequestView(APIView):
         
 class RejectAccountRequestView(APIView):
     """Reject account request"""
-    permission_classes = [IsAuthenticated & IsBankerOrAdmin]
 
     def post(self, request, id):
         """POST method for rejecting account request"""
+        if request.user.type == 'CUSTOMER':
+            return Response({"error": "Customer can't reject accounts"}, 403)
         try:
             account_request = AccountRequest.objects.get(pk=id, status='PENDING')
             account_request.reject(request.data.get('description', ''))
@@ -165,10 +195,11 @@ class RejectAccountRequestView(APIView):
 
 class ApproveCardRequestView(APIView):
     """Approve card request"""
-    permission_classes = [IsAuthenticated & IsBankerOrAdmin]
 
     def post(self, request, id):
         """POST method for approving card request"""
+        if request.user.type == 'CUSTOMER':
+            return Response({"error": "Customer can't approve cards"}, 403)
         try:
             card_request = CardRequest.objects.get(pk=id, status='PENDING')
             card_request.approve() 
@@ -183,11 +214,13 @@ class ApproveCardRequestView(APIView):
     
 class RejectCardRequestView(APIView):
     """Reject card request"""
-    permission_classes = [IsAuthenticated & IsBankerOrAdmin]
 
     def post(self, request, id):
         """POST method for rejecting card request"""
+        if request.user.type == 'CUSTOMER':
+            return Response({"error": "Customer can't reject cards"}, 403)
         try:
+
             card_request = CardRequest.objects.get(pk=id, status='PENDING')
             card_request.reject(request.data.get('description', ''))
             return Response({"message": "Card request rejected."}, status=200)
