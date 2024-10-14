@@ -10,5 +10,5 @@ class CustomUser(AbstractUser):
         ADMIN = 'ADMIN'
     
     email = models.EmailField(unique=True)
-    type = models.CharField(max_length=20, choices=UserTypes, default='CUSTOMER')
+    type = models.CharField(max_length=20, choices=UserTypes.choices, default='CUSTOMER')
 

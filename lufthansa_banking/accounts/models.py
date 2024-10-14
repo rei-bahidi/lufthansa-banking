@@ -34,21 +34,9 @@ class Currencies(models.Model):
         super().delete(*args, **kwargs)
 
     def save(self, *args, **kwargs):
-        if self.is_active:
-            super().save(*args, **kwargs)
-
-        if self.currency_code == 'EUR':
+        if not self.is_active and self.currency_code == 'EUR':
             raise ValidationError("Cannot deactivate default currency")
-        
-        default_currency = Currencies.objects.get(currency_code='EUR')
-        accounts = Account.objects.filter(currency=self)
-        
-        for account in accounts:
-            new_balance = convert_currency(account.balance, self.currency_code, 'EUR')
-            account.currency = default_currency
-            account.balance = new_balance
-            account.save()
-
+    
         super().save(*args, **kwargs)
 
 
@@ -173,12 +161,3 @@ class CardRequest(models.Model):
         self.status = 'REJECTED'
         self.description = description
         self.save()
-        
-
-
-
-
-
-
-
-

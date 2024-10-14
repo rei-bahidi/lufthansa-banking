@@ -1,9 +1,8 @@
 from .models import CustomUser
-from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
+from rest_framework.serializers import ModelSerializer, ValidationError 
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-class CustomUserSerializer(serializers.ModelSerializer):
+class CustomUserSerializer(ModelSerializer):
 
 
     class Meta:
@@ -17,7 +16,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
     def validate(self, data):
         try:
             if CustomUser.objects.filter(email=data['email']).exists():
-                raise serializers.ValidationError("A user with this email already exists.")
+                raise ValidationError("A user with this email already exists.")
             return data
         except ValidationError as e:
             raise ValidationError(f"Something went wrong: {str(e)}")

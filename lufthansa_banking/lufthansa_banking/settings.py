@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'users',
     'rest_framework',
     'rest_framework_simplejwt',
+    'django_seed',
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True
