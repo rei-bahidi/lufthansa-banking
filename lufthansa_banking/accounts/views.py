@@ -25,6 +25,7 @@ class AccountViewSet(ModelViewSet):
             serializer.save()
             return Response(serializer.data, status=201)
         except ValidationError as e:
+            logger('ACCOUNTS').error(f"Error: {str(e)}")
             return Response({"error": "Couldn't validate"}, status=400)
         except Exception as e:
             logger('ACCOUNTS').info(f"Account creation problem")
@@ -64,6 +65,7 @@ class CardViewSet(ModelViewSet):
             serializer.save()
             return Response(serializer.data, status=201)
         except ValidationError as e:
+            logger('ACCOUNTS').error(f"Error: {str(e)}")
             return Response({"error": "Couldn't validate"}, status=400)
         except Exception as e:
             logger('ACCOUNTS').info(f"Card creation problem")
@@ -98,6 +100,7 @@ class AccountRequestViewSet(ModelViewSet):
             serializer.save()
             return Response(serializer.data, status=201)
         except ValidationError as e:
+            logger('ACCOUNTS').info(f"Account request creation problem")
             return Response({"error": "Couldn't validate"}, status=400)
         except Exception as e:
             logger('ACCOUNTS').info(f"Account request creation problem")
@@ -116,6 +119,7 @@ class AccountRequestViewSet(ModelViewSet):
                 return account_request
             raise AccountRequest.DoesNotExist
         except ValidationError as e:
+            logger('ACCOUNTS').error(f"Error: {str(e)}")
             return Response({"error": "Couldn't validate"}, status=400)
         except Exception as e:
             logger('ACCOUNTS').error(f"Error: {str(e)}")
@@ -135,7 +139,6 @@ class CardRequestViewSet(ModelViewSet):
         except ValidationError as e:
             return Response({"error": "Couldn't validate"}, status=400)
         except Exception as e:
-            print(e)
             logger('ACCOUNTS').info(f"Card request creation problem")
             return Response({"error": "Something went wrong"}, status=500)
             
@@ -174,8 +177,10 @@ class ApproveAccountRequestView(APIView):
             account_request.approve() 
             return Response({"message": "Account request approved."}, status=200)
         except AccountRequest.DoesNotExist:
+            logger('ACCOUNTS').error(f"Error: {str(e)}")
             return Response({"error": "Account request not found or already processed."}, status=404)
         except ValidationError as e:
+            logger('ACCOUNTS').error(f"Error: {str(e)}")
             return Response({"error": "Couldn't validate"}, status=400)
         except Exception as e:
             logger('ACCOUNTS').error(f"Error: {str(e)}")
@@ -193,8 +198,10 @@ class RejectAccountRequestView(APIView):
             account_request.reject(request.data.get('description', ''))
             return Response({"message": "Account request rejected."}, status=200)
         except AccountRequest.DoesNotExist:
+            logger('ACCOUNTS').error(f"Error: {str(e)}")
             return Response({"error": "Account request not found or already processed."}, status=404)
         except ValidationError as e:
+            logger('ACCOUNTS').error(f"Error: {str(e)}")
             return Response({"error": "Couldn't validate"}, status=400)
         except Exception as e:
             logger('ACCOUNTS').error(f"Error: {str(e)}")
@@ -213,8 +220,10 @@ class ApproveCardRequestView(APIView):
             card_request.approve() 
             return Response({"message": "Card request approved."}, status=200)
         except CardRequest.DoesNotExist:
+            logger('ACCOUNTS').error(f"Error: {str(e)}")
             return Response({"error": "Card request not found or already processed."}, status=404)
         except ValidationError as e:
+            logger('ACCOUNTS').error(f"Error: {str(e)}")
             return Response({"error": "Couldn't validate"}, status=400)
         except Exception as e:
             logger('ACCOUNTS').error(f"Error: {str(e)}")
@@ -233,8 +242,10 @@ class RejectCardRequestView(APIView):
             card_request.reject(request.data.get('description', ''))
             return Response({"message": "Card request rejected."}, status=200)
         except CardRequest.DoesNotExist:
+            logger('ACCOUNTS').error(f"Error: {str(e)}")
             return Response({"error": "Card request not found or already processed."}, status=404)
         except ValidationError as e:
+            logger('ACCOUNTS').error(f"Error: {str(e)}")
             return Response({"error": "Couldn't validate"}, status=400)
         except Exception as e:
             logger('ACCOUNTS').error(f"Error: {str(e)}")

@@ -2,6 +2,7 @@ import pytest
 from django.core.exceptions import ValidationError
 from decimal import Decimal
 from accounts.models import Currencies, Account, AccountRequest, Card, CardRequest, StatusChoices
+from users.models import CustomUser 
 
 @pytest.fixture
 def active_currency():
@@ -16,7 +17,6 @@ def inactive_currency():
 @pytest.fixture
 def user():
     """Fixture for creating a mock user."""
-    from users.models import CustomUser 
     return CustomUser.objects.create(username='testuser', email='test@example.com', password='testpass')
 
 @pytest.fixture

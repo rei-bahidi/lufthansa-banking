@@ -1,7 +1,5 @@
 from utils import logger
-from django.db import transaction
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.request import Request
 
@@ -25,19 +23,19 @@ class UserViewSet(ModelViewSet):
                 raise ValidationError({"error": "Customer cannot create a user"})
             
             if self.request.user.type == 'BANKER' and serializer.validated_data['type'] == 'ADMIN':
-                raise ValidationError({"error": "Banker cannot create an ADMIN"})
+                raise ValidationError({"error": "Banker cannot create an ADMIN"}, status=400)
             
             if self.request.user.type == 'BANKER' and serializer.validated_data['type'] == 'BANKER':
-                raise ValidationError({"error": "Banker cannot create a BANKER"})
+                raise ValidationError({"error": "Banker cannot create a BANKER"}, status=400)
             
             serializer.save()
             return Response(serializer.data, status=201)
         except ValidationError as e:
             logger('USERS').info(f"User creation problem")
-            return Response({"error": "Something went wrong"}, status=500)
+            return Response({"error": "Something went wrong"}, status=400)
         except Exception as e:
             logger('USERS').info(f"User creation problem")
-            return Response({"error": "Something went wrong"}, status=500)
+            return Response({"error": "Something went wrong"}, status=400)
         
     def get_queryset(self):
         """GET, DELETE methods for User"""

@@ -1,7 +1,10 @@
 asgiref==3.8.1
 coverage==7.6.2
+cssselect==1.2.0
+d==0.2.2
 Django==5.1.2
 django-cors-headers==4.4.0
+django-extensions==3.2.3
 django-filter==24.3
 django-seed==0.3.1
 djangorestframework==3.15.2
@@ -9,12 +12,15 @@ djangorestframework-simplejwt==5.3.1
 exceptiongroup==1.2.2
 Faker==30.3.0
 iniconfig==2.0.0
+lxml==5.3.0
 Markdown==3.7
 packaging==24.1
 pluggy==1.5.0
 psycopg2==2.9.9
 psycopg2-binary==2.9.9
+Pygments==2.18.0
 PyJWT==2.9.0
+pyquery==2.0.1
 pytest==8.3.3
 pytest-cov==5.0.0
 pytest-django==4.9.0
