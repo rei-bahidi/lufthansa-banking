@@ -9,8 +9,9 @@ A simple django project to imitate a banking process. Most of the testing is don
 - Log in to the environment with `source venv/bin/activate` if on linux and `./venv/bin/Activate.ps1` if on windows
 - After activating the environment install the requirements in the requirements.txt file with `pip install -r requirements.txt`
 - From the root of the directory run `python3 lufthansa_banking/manage.py migrate` to migrate the models to the postgres database
+- To add an initial user and currency execute `python3 lufthansa_banking/manage.py loaddata lufthansa_banking/initial_data.json`
 - To run tests get into the lufthansa_banking directory and run `pytest`
-
+- Now everything is good to go, :)!
 
 # Author
 

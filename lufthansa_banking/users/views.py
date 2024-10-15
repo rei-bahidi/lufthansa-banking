@@ -11,6 +11,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 class UserViewSet(ModelViewSet):
     """Viewset for User model"""
+    lookup_field = 'id'
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
 
@@ -37,6 +38,29 @@ class UserViewSet(ModelViewSet):
             logger('USERS').info(f"User creation problem")
             return Response({"error": "Something went wrong"}, status=400)
         
+    def update(self, request, *args, **kwargs):
+        """User PUT method"""
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+
+            if self.request.user.type == 'CUSTOMER':
+                raise ValidationError({"error": "Customer cannot update a user"})
+
+            if self.request.user.type == 'BANKER':
+                if serializer.validated_data.get('type') in ['ADMIN', 'BANKER']:
+                    raise ValidationError({"error": "Banker cannot change user type"}, status=400)
+
+            serializer.save() 
+            return Response(serializer.data, status=200)
+        except ValidationError as e:
+            logger('USERS').info(f"User update problem: {str(e)}")
+            return Response({"error": str(e)}, status=400)
+        except Exception as e:
+            logger('USERS').info(f"User update problem: {str(e)}")
+            return Response({"error": "Something went wrong"}, status=400)
+
     def get_queryset(self):
         """GET, DELETE methods for User"""
         try:

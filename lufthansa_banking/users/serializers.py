@@ -16,10 +16,16 @@ class CustomUserSerializer(ModelSerializer):
             'id': {'read_only': True},
         }
 
+    def update(self, instance, validated_data):
+        validated_data.pop('password', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
+
     def validate(self, data):
         try:
-            if CustomUser.objects.filter(email=data['email']).exists():
-                raise ValidationError("A user with this email already exists.")
+
             
             if data["type"] not in CustomUser.UserTypes.values:
                 raise ValidationError("Not allowed user type.")

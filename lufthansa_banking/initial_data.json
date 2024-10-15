@@ -19,7 +19,7 @@
             "last_name": "Admin",
             "is_staff": true,
             "is_superuser": true,
-            "type": "ADMIN",
+            "type": "ADMIN"
         }     
     }
 

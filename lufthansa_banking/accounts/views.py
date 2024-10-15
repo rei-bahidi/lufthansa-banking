@@ -30,7 +30,26 @@ class AccountViewSet(ModelViewSet):
         except Exception as e:
             logger('ACCOUNTS').info(f"Account creation problem")
             return Response({"error": "Something went wrong"}, status=500)
-            
+    
+    def update(self, request, *args, **kwargs):
+        """User PUT method"""
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+
+            if self.request.user.type == 'CUSTOMER':
+                raise ValidationError({"error": "Customer cannot update an account"})
+
+            serializer.save() 
+            return Response(serializer.data, status=200)
+        except ValidationError as e:
+            logger('USERS').info(f"User update problem: {str(e)}")
+            return Response({"error": str(e)}, status=400)
+        except Exception as e:
+            logger('USERS').info(f"User update problem: {str(e)}")
+            return Response({"error": "Something went wrong"}, status=400)
+
     def get_queryset(self):
         """GET, PUT, DELETE methods for Account"""
         try:
@@ -53,12 +72,13 @@ class CardViewSet(ModelViewSet):
     queryset = Card.objects.all()
     serializer_class = CardSerializer
 
-    def perform_create(self, serializer):
+    def create(self, request):
         """Card POST method"""
         if self.request.user.type == 'CUSTOMER':
             return Response({"error": "Customer can't create cards"}, 403)
-
+        serializer = CardSerializer(data=request.data)
         try:
+            serializer.is_valid(raise_exception=True)
             if self.request.user.type == "CUSTOMER":
                 return Response({"error": "Only bankers or admins can create accounts."}, status=403)
         
@@ -70,7 +90,26 @@ class CardViewSet(ModelViewSet):
         except Exception as e:
             logger('ACCOUNTS').info(f"Card creation problem")
             return Response({"error": "Something went wrong"}, status=500)
-            
+    
+    def update(self, request, *args, **kwargs):
+        """User PUT method"""
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+
+            if self.request.user.type == 'CUSTOMER':
+                raise ValidationError({"error": "Customer cannot update a card"})
+
+            serializer.save() 
+            return Response(serializer.data, status=200)
+        except ValidationError as e:
+            logger('USERS').info(f"User update problem: {str(e)}")
+            return Response({"error": str(e)}, status=400)
+        except Exception as e:
+            logger('USERS').info(f"User update problem: {str(e)}")
+            return Response({"error": "Something went wrong"}, status=400)
+
     def get_queryset(self):
         """GET, DELETE methods for Card"""
         try:
