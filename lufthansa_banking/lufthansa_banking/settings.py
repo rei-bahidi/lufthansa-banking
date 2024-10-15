@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'users',
     'rest_framework',
     'rest_framework_simplejwt',
+    'django_seed',
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True
@@ -151,7 +152,7 @@ REST_FRAMEWORK = {
         # 'rest_framework.authentication.BasicAuthentication',
         # 'rest_framework.authentication.SessionAuthentication',    
     ],
-    
+    'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
     'DEFAULT_PERMISSION_CLASSES': [
         # 'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly',
         'rest_framework.permissions.IsAuthenticated',  

@@ -12,7 +12,6 @@ class TransactionViewSet(ModelViewSet):
     """Viewset for Transaction model"""
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
-    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer: TransactionSerializer):
         """Transaction POST method"""
@@ -23,7 +22,7 @@ class TransactionViewSet(ModelViewSet):
             return Response({"detail": str(e)}, status=404)
 
     def get_queryset(self):
-        """GET, PUT, DELETE methods for Transaction"""
+        """GET, DELETE methods for Transaction"""
         try:
             if self.request.user.type == 'ADMIN' or self.request.user.type == 'BANKER':
                 return Transaction.objects.all()

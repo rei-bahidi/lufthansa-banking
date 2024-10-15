@@ -4,7 +4,6 @@ from utils import convert_currency
 from uuid import uuid4
 from django.db import transaction
 
-
 class Transaction(models.Model):
     """Transaction model to represent a financial transaction"""
 

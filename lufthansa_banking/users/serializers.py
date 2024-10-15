@@ -1,31 +1,32 @@
 from .models import CustomUser
-from rest_framework import serializers
-from django.contrib.auth.models import Group
+from rest_framework.serializers import ModelSerializer, ValidationError 
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework.exceptions import ValidationError
 
 
 
-class CustomUserSerializer(serializers.ModelSerializer):
+class CustomUserSerializer(ModelSerializer):
+
+
     class Meta:
         model = CustomUser
         fields = ['id', 'username', 'first_name', 'last_name', 'email', 'password', 'type']
         extra_kwargs = {
             'password': {'write_only': True},
+            'id': {'read_only': True},
         }
 
-        read_only_fields = ['id']
-
-    
     def validate(self, data):
-        if CustomUser.objects.filter(email=data["email"]).exists():
-            raise ValidationError("Email already exists.")
-
-        if data["type"] not in CustomUser.UserTypes.values:
-            raise ValidationError("Not allowed user type.")
-
-        return data
-
+        try:
+            if CustomUser.objects.filter(email=data['email']).exists():
+                raise ValidationError("A user with this email already exists.")
+            
+            if data["type"] not in CustomUser.UserTypes.values:
+                raise ValidationError("Not allowed user type.")
+            
+            return data
+        except ValidationError as e:
+            raise ValidationError(f"Something went wrong: {str(e)}")
 
     def create(self, validated_data):
         try:
@@ -34,9 +35,8 @@ class CustomUserSerializer(serializers.ModelSerializer):
             user.set_password(password)
             user.save()
             return user
-        except serializers.ValidationError as e:
-            raise ValidationError({"error": "User creation failed. Please try again."})
-        
+        except ValidationError as e:
+            raise ValidationError(f"Something went wrong: {str(e)}")
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
