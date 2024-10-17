@@ -8,7 +8,7 @@
         }
     },
     {
-        "model": "users.User",
+        "model": "users.CustomUser",
         "pk": 1,
         "fields": {
             "password": "pbkdf2_sha256$870000$y7evOap3pNrzKc2AkZRJF5$8xLvQX5XaDNSd2ieTCOaPGjVEPUT2Wz5ZXEeLRH1Tec=",

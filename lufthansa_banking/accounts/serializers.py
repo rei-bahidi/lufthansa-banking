@@ -6,7 +6,7 @@ from rest_framework.exceptions import ValidationError
 class AccountSerializer(ModelSerializer):
     class Meta:
         model = Account
-        fields = ['id','user', 'balance', 'currency', 'balance', 'is_active', 'creation_date']
+        fields = ['id', 'user', 'currency', 'balance', 'is_active', 'creation_date']
         extra_kwargs= {
             'user': {'read_only': True},
             'id': {'read_only': True},
@@ -83,6 +83,7 @@ class AccountRequestSerializer(ModelSerializer):
     def validate(self, data):
         if self.context['request'].user.type == 'CUSTOMER' and not data["description"]:
             raise ValidationError("Customer can't add descriptions.")
+        return data
 
     def create(self, validated_data):
         validated_data["user"] = self.context['request'].user
