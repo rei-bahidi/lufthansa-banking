@@ -12,7 +12,7 @@ class TransactionSerializer(ModelSerializer):
         if data["amount"] <= 0:
             raise ValidationError("Amount must be greater than 0.")
 
-        if data['from_account'] and data["from_account"].user != self.context['request'].user and self.context['request'].user.type == 'CUSTOMER':
+        if data.get('from_account') and data["from_account"].user != self.context['request'].user and self.context['request'].user.type == 'CUSTOMER':
             raise ValidationError("You can only debit from your own account.")
 
         if data['transaction_type'] == 'CREDIT' and not data['to_account']:

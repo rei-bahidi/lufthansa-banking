@@ -25,11 +25,15 @@ class CustomUserSerializer(ModelSerializer):
 
     def validate(self, data):
         try:
-
+            if CustomUser.objects.filter(email=data['email']).exists():
+                raise ValidationError("A user with this email already exists.")
             
             if data["type"] not in CustomUser.UserTypes.values:
                 raise ValidationError("Not allowed user type.")
             
+            if CustomUser.objects.filter(username=data['username']).exists():
+                raise ValidationError("A user with this username already exists.")
+
             return data
         except ValidationError as e:
             raise ValidationError(f"Something went wrong: {str(e)}")

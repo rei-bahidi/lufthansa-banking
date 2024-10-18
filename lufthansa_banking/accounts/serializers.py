@@ -6,7 +6,7 @@ from rest_framework.exceptions import ValidationError
 class AccountSerializer(ModelSerializer):
     class Meta:
         model = Account
-        fields = ['id','user', 'balance', 'currency', 'balance', 'is_active', 'creation_date']
+        fields = ['id','user', 'currency', 'balance', 'is_active', 'creation_date']
         extra_kwargs= {
             'user': {'read_only': True},
             'id': {'read_only': True},
@@ -45,6 +45,9 @@ class CardSerializer(ModelSerializer):
         if account.user != self.context['request'].user:
             raise ValidationError("You can only request a card for your own account.")
 
+        return attrs
+
+
 class CardRequestSerializer(ModelSerializer):
     account = UUIDField()
     class Meta:
@@ -60,15 +63,16 @@ class CardRequestSerializer(ModelSerializer):
             return card
         except Account.DoesNotExist:
             raise Exception("Account with the given UUID does not exist.")
-        except ValidationError as e:
+        except ValidationError as e: 
             raise ValidationError({"error": "Card request failed. Please try again."})
 
     def validate(self, attrs):
-        if self.context['request'].user.type == 'CUSTOMER' and not attrs["description"]:
+        if self.context['request'].user.type == 'CUSTOMER' and attrs.get("description"):
             raise ValidationError("Customer can't add descriptions.")
 
         if Account.objects.get(id=str(attrs['account'])).user != self.context['request'].user and self.context['request'].user.type not in ["ADMIN", "BANKER"]:
             raise ValidationError("You can only request a card for your own account.")
+        
         return attrs
 
 class AccountRequestSerializer(ModelSerializer):
@@ -81,9 +85,10 @@ class AccountRequestSerializer(ModelSerializer):
         }
 
     def validate(self, data):
-        if self.context['request'].user.type == 'CUSTOMER' and not data["description"]:
+        if self.context['request'].user.type == 'CUSTOMER' and data.get("description"):
             raise ValidationError("Customer can't add descriptions.")
-
+        return data
+    
     def create(self, validated_data):
         validated_data["user"] = self.context['request'].user
         request = AccountRequest.objects.create(**validated_data)

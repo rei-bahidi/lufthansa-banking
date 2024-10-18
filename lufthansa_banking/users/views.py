@@ -2,7 +2,7 @@ from utils import logger
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 from rest_framework.request import Request
-
+from django.http import HttpResponseRedirect
 from .models import CustomUser
 from .serializers import CustomUserSerializer, CustomTokenObtainPairSerializer
 from rest_framework.exceptions import ValidationError
@@ -18,8 +18,8 @@ class UserViewSet(ModelViewSet):
     def create(self, request: Request, *args, **kwargs):
         """User POST method"""
         serializer: CustomUserSerializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         try:
-            serializer.is_valid(raise_exception=True)
             if self.request.user.type == 'CUSTOMER':
                 raise ValidationError({"error": "Customer cannot create a user"})
             
@@ -32,10 +32,10 @@ class UserViewSet(ModelViewSet):
             serializer.save()
             return Response(serializer.data, status=201)
         except ValidationError as e:
-            logger('USERS').info(f"User creation problem")
-            return Response({"error": "Something went wrong"}, status=400)
+            logger('USERS').info(f"User creation problem", str(e))
+            return Response({"error": "User couldn't be validated"}, status=400)
         except Exception as e:
-            logger('USERS').info(f"User creation problem")
+            logger('USERS').info(f"User creation problem", str(e))
             return Response({"error": "Something went wrong"}, status=400)
         
     def update(self, request, *args, **kwargs):

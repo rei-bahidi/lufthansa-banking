@@ -259,7 +259,7 @@ class ApproveCardRequestView(APIView):
             card_request.approve() 
             return Response({"message": "Card request approved."}, status=200)
         except CardRequest.DoesNotExist:
-            logger('ACCOUNTS').error(f"Error: {str(e)}")
+            logger('ACCOUNTS').error(f"Warning: card request does not exist")
             return Response({"error": "Card request not found or already processed."}, status=404)
         except ValidationError as e:
             logger('ACCOUNTS').error(f"Error: {str(e)}")

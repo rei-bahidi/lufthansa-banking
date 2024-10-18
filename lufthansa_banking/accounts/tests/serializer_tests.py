@@ -1,3 +1,4 @@
+from decimal import Decimal
 import pytest
 from rest_framework.exceptions import ValidationError
 from accounts.models import Account, Card, CardRequest, AccountRequest, Currencies
@@ -59,21 +60,21 @@ def test_card_serializer(card):
     assert serializer.data['card_type'] == card.card_type
 
 @pytest.mark.django_db
-def test_card_request_serializer_valid(account, user):
+def test_card_request_serializer_valid(account, user, active_currency):
     """Test that the CardRequestSerializer validates correctly."""
     temp_user = user
     request_data = {
         'card_type': 'DEBIT',
         'account': account.id,
-        'user_salary': 600.00,
-        'salary_currency': 'EUR'
+        'user_salary': Decimal(600.00),
+        'salary_currency': active_currency.currency_code
     }
 
     class MockRequest:
         user = temp_user
 
     serializer = CardRequestSerializer(data=request_data, context={'request': MockRequest()})
-    assert serializer.is_valid()
+    assert serializer.is_valid(raise_exception=True)
 
 @pytest.mark.django_db
 def test_card_request_serializer_invalid_user(account, user):
